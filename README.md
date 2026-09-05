@@ -171,6 +171,10 @@ way through, so OpenCV never got installed. Fix the failing package and re-run
 version. Check with `python --version` — anything from 3.10 to 3.14 is supported by
 the pinned sets above.
 
+**`ResolutionImpossible` mentioning `numpy<2.3.0`.** An old checkout pinned
+`opencv-python==4.12.0.88`, the one release that caps NumPy below 2.3.0 — unsatisfiable
+on CPython 3.14, where no NumPy arm64 wheel exists below 2.3.2. Pull and reinstall.
+
 ---
 
 ## Usage
