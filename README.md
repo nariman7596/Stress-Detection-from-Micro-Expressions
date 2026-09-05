@@ -147,6 +147,13 @@ binding constraint:
 | 3.10 – 3.12 | 0.10.21 | legacy `solutions.face_mesh` (needs NumPy < 2) | bundled in the wheel |
 | 3.13+ | 1.0.1 | Tasks `FaceLandmarker` | `face_landmarker.task` downloaded into `models/` on first run |
 
+> **On macOS, use Python 3.10–3.12.** MediaPipe 1.0.x installs on newer Pythons but
+> **aborts at runtime**: its macOS build initialises Metal inside
+> `TensorsToDetectionsCalculator` even under the default CPU delegate, and dies with
+> `Check failed: service_ Service is unavailable` in `DrishtiMetalHelper`. There is no
+> flag that avoids it — the delegate is already CPU. Linux is unaffected. See
+> [Troubleshooting](#troubleshooting) for the fix.
+
 MediaPipe 0.10.x has **no macOS arm64 wheels above CPython 3.12**; 1.0.x ships a
 pure-Python wheel that installs anywhere but exposes only the Tasks API.
 `src/face_mesh.py` supports both and uses whichever is installed — the active backend
@@ -174,6 +181,29 @@ the pinned sets above.
 **`ResolutionImpossible` mentioning `numpy<2.3.0`.** An old checkout pinned
 `opencv-python==4.12.0.88`, the one release that caps NumPy below 2.3.0 — unsatisfiable
 on CPython 3.14, where no NumPy arm64 wheel exists below 2.3.2. Pull and reinstall.
+
+**macOS: `Check failed: service_ Service is unavailable` / `DrishtiMetalHelper` / a
+`zsh: abort`.** You are on Python 3.13+, so pip installed MediaPipe 1.0.x, whose macOS
+Tasks build cannot start. Move to Python 3.12. Without Homebrew, the shortest route is
+[uv](https://docs.astral.sh/uv/), which fetches a standalone CPython for you:
+
+```bash
+cd ~/Stress-Detection-from-Micro-Expressions
+source .venv/bin/activate          # your current 3.13+ venv
+pip install uv
+uv venv --python 3.12 --seed .venv312   # --seed puts pip in the new venv
+deactivate
+
+source .venv312/bin/activate
+pip install -r requirements.txt    # now resolves to MediaPipe 0.10.21
+python main.py --camera 0 --show --flip
+```
+
+Or install Python 3.12 from [python.org](https://www.python.org/downloads/) and use
+`/Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m venv .venv312`.
+
+The startup log tells you which backend you got: `mediapipe.solutions` is the working
+one on macOS, `mediapipe.tasks FaceLandmarker` is the one that aborts there.
 
 ---
 

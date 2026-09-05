@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 import os
+import platform
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -477,6 +478,21 @@ class FaceMeshDetector:
 
         from mediapipe.tasks import python as mp_python  # noqa: PLC0415
         from mediapipe.tasks.python import vision  # noqa: PLC0415
+
+        if platform.system() == "Darwin":
+            # MediaPipe 1.0.x's macOS build initialises Metal inside
+            # TensorsToDetectionsCalculator even with the CPU delegate (the
+            # default), and the Metal service is not registered -- the process
+            # aborts with "Check failed: service_ Service is unavailable" from
+            # DrishtiMetalHelper.  This is a hard abort() in C++; it cannot be
+            # caught here, so warn loudly before it happens.
+            logger.warning(
+                "MediaPipe %s on macOS uses the Tasks backend, which is known to abort in "
+                "DrishtiMetalHelper ('Service is unavailable'). Use Python 3.12 or older, "
+                "where requirements.txt installs MediaPipe 0.10.x and the legacy solutions "
+                "backend. See the Troubleshooting section of the README.",
+                getattr(mp, "__version__", "1.x"),
+            )
 
         model_path = ensure_tasks_model(Path(self.model_asset_path) if self.model_asset_path else None)
         options = vision.FaceLandmarkerOptions(
