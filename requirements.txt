@@ -1,0 +1,11 @@
+# Core runtime dependencies (pinned).
+#
+# This set is verified against macOS 14+ on Apple Silicon with Python 3.11.
+# MediaPipe 0.10.x ships the legacy `mediapipe.solutions.face_mesh` API and
+# requires NumPy < 2.  src/face_mesh.py also supports MediaPipe >= 1.0
+# (Tasks API, `FaceLandmarker`); if you upgrade, drop the numpy pin as well.
+numpy==1.26.4
+scipy==1.14.1
+opencv-python==4.10.0.84
+mediapipe==0.10.21
+matplotlib==3.9.2
