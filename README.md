@@ -139,15 +139,37 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`requirements.txt` pins **MediaPipe 0.10.x**, which ships the legacy
-`mediapipe.solutions.face_mesh` API and needs NumPy < 2. MediaPipe **1.0+** removed
-that API; `src/face_mesh.py` detects this and falls back to the Tasks API
-(`FaceLandmarker`), downloading `face_landmarker.task` into `models/` on first run.
-Both backends are supported — the active one is logged at startup and shown in the
-overlay footer.
+`requirements.txt` selects one of two stacks automatically, because MediaPipe is the
+binding constraint:
+
+| your Python | MediaPipe | backend | model |
+|---|---|---|---|
+| 3.10 – 3.12 | 0.10.21 | legacy `solutions.face_mesh` (needs NumPy < 2) | bundled in the wheel |
+| 3.13+ | 1.0.1 | Tasks `FaceLandmarker` | `face_landmarker.task` downloaded into `models/` on first run |
+
+MediaPipe 0.10.x has **no macOS arm64 wheels above CPython 3.12**; 1.0.x ships a
+pure-Python wheel that installs anywhere but exposes only the Tasks API.
+`src/face_mesh.py` supports both and uses whichever is installed — the active backend
+is logged at startup and shown in the overlay footer, so you can always tell which one
+you are on.
 
 On macOS, grant camera access the first time you run with a USB camera
-(*System Settings → Privacy & Security → Camera*).
+(*System Settings → Privacy & Security → Camera*). Grant it to your **terminal app**,
+not to Python, and restart the terminal afterwards.
+
+### Troubleshooting
+
+**`error: metadata-generation-failed` on scipy, or a missing `g95`/`gfortran`.**
+You are on an old checkout. SciPy is not a dependency of this project — the spectral
+analysis uses `numpy.fft`. Pull the latest `requirements.txt` and reinstall.
+
+**`ModuleNotFoundError: No module named 'cv2'`.** The dependency install aborted part
+way through, so OpenCV never got installed. Fix the failing package and re-run
+`pip install -r requirements.txt`; the error above this one is the real one.
+
+**pip tries to build NumPy or MediaPipe from source.** No wheel exists for your Python
+version. Check with `python --version` — anything from 3.10 to 3.14 is supported by
+the pinned sets above.
 
 ---
 
@@ -238,6 +260,9 @@ file loads cleanly into pandas or the notebook.
 │   └── 01_au_exploration.ipynb    signal inspection, AU time series, spectra
 └── tests/                         160 tests, no camera or MediaPipe required
 ```
+
+Dependencies are deliberately minimal: NumPy, OpenCV and MediaPipe at runtime,
+plus Matplotlib for the notebook. No SciPy — the FFT work uses `numpy.fft`.
 
 `src/pipeline.py` is the only addition to the originally planned layout: keeping the
 stage wiring out of `main.py` leaves the CLI thin and makes the whole pipeline

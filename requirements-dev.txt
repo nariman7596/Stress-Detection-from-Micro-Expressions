@@ -1,4 +1,7 @@
 -r requirements.txt
 
+# Notebook and test tooling.
+matplotlib==3.9.2; python_version < "3.13"
+matplotlib==3.10.7; python_version >= "3.13"
 pytest==8.3.4
 jupyter==1.1.1
